@@ -68,31 +68,31 @@ for i=1:length(th)
 end 
 
 % Model and sizes.
-A = [1];
-B = [1];
+A = [1 0 ; 0 1];
+B = [1 0 ; 0 1];
 
 Nx = size(A, 2);
 Nu = size(B, 2);
 Nt = 10;
 Nsim = total_t;
 
-Q = 1;
+Q = [1];
 
 %N = struct('x', Nx, 'u', Nu, 't', Nt);
 
 f = mpc.getCasadiFunc(@(x,u) A*x + B*u*del_t, [Nx, Nu], {'x', 'u'}, {'f'});
 
-lcasadi = mpc.getCasadiFunc(@l_spatial, {Nx, Nx, Nx}, ...
+lcasadi = mpc.getCasadiFunc(@l_spatial, {Nx, Nx, Nx-1}, ...
                             {'x', 'xsp', 'Q'}, {'lsp'});
 
 % Build bounds, parameters, and N.
 lb = struct('u', -0.5*ones(Nu, Nsim));
 ub = struct('u', 0.5*ones(Nu, Nsim));
-par = struct('xsp', Xunit_2, 'Q', Q);
+par = struct('xsp', [Xunit_2; Yunit_2], 'Q', Q);
 
 N = struct('x', Nx, 'u', Nu, 't', Nsim);
 
-x0 = -4;
+x0 = [-4;-3.5]; %Initial Guess
 
 % Build solver and optimize.
 solver = mpc.nmpc('f', f, 'l', lcasadi, 'N', N, 'lb', lb, 'ub', ub, ...
