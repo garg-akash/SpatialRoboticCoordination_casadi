@@ -106,8 +106,8 @@ for i = 1:length(th)
     Poly_1 = [AG_1;BG_1;CG_1;DG_1;AG_1];
     Poly_2 = [AG_2;BG_2;CG_2;DG_2;AG_2];
     [xa,ya] = polybool('intersection',Poly_1(:,1),Poly_1(:,2),Poly_2(:,1),Poly_2(:,2));
-    ar = polyarea(xa,ya);
-    Ar = [Ar,ar];
+    arr = polyarea(xa,ya);
+    Ar = [Ar,arr];
 end
 Ar_ex = Ar;
 for i=2:length(th_ex)
