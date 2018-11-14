@@ -92,7 +92,7 @@ arg.ubg =  0;    % upper bound on g
 
 % Solve the problem
 % Don't keep x0=0, atan2(Vy(1),Vx(1)) will give inf 
-res = solver('x0',1,'lbx',[-0.5],'ubx',[0.5],'lbg',[-0.8*ones(N-1,1)],'ubg',[0.8*ones(N-1,1)]);
+res = solver('x0',1,'lbx',[-0.5],'ubx',[0.5],'lbg',[-0.65*ones(N-1,1)],'ubg',[0.65*ones(N-1,1)]);
 
 f_opt       = full(res.f);
 u_opt       = full(res.x);
