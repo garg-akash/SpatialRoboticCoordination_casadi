@@ -9,8 +9,8 @@ nx  = 1;
 nu  = 1;
 h = del_t; %discretization step
 
-Q = 1;
-R = 1;
+Q = 0.5;
+R = 0.5;
 
 Vx = SX.sym('Vx',nu);
 Vy = SX.sym('Vy',nu);
@@ -20,7 +20,7 @@ Py = SX.sym('Py',nx);
 xdot = Vx(1);
 ydot = Vy(1);
 
-f = Function('f', {Px,Vx},{xdot});
+f = Function('f', {Px,Vx}, {xdot});
 
 % RK4
 VX   = MX.sym('VX');
@@ -47,7 +47,7 @@ Vy = SX.sym('Vy',nv);
 J=0;
 
 % Get an expression for the cost and state at end
-x_0 = r_st(1);
+x_0 = r_st(1); %starting position 
 PX = x_0;
 y_0 = r_st(2); 
 PY = y_0;
@@ -59,10 +59,19 @@ for i = 1:N
     PY = out_y;
     
     %J = J + Q*PX(1)^2 + R*Vx(i)^2;
+%     [AG_1,BG_1,CG_1,DG_1] = rectangle_plot(l_1,b_1,o_h(i),o_px(i),o_py(i));
+%     [AG_2,BG_2,CG_2,DG_2] = rectangle_plot(l_2,b_2,r_h(i),r_px(i),r_py(i));
+%     Poly_1 = [AG_1;BG_1;CG_1;DG_1;AG_1];
+%     Poly_2 = [AG_2;BG_2;CG_2;DG_2;AG_2];
     
     wt = (PY(1) - r_py(i))/(o_py(i) - r_py(i));
     
+    %wt = (PX(1) - r_px(i))/(o_px(i) - r_px(i));
+    %wt = ((PX(1) - r_px(i))*(PY(1) - r_py(i)))/(o_py(i) - r_py(i));
+    %wt = (PX(1) - o_px(i))^2 + (PY(1) - o_py(i))^2;
+    
     %steer = atan2(Vy(i),Vx(i));
+    
     if (i==N/4 || i==2*N/4 || i==3*N/4 || i== N)
         J = J + Q*((PX(1) - r_px(i))^2  + (PY(1) - r_py(i))^2);
     end
@@ -82,17 +91,9 @@ options = struct;
 options.hessian_approximation = 'limited-memory';
 solver = nlpsol('solver', 'ipopt', nlp);
 
-%% Solve the NLP
-arg = struct;
-arg.x0  = 0.;    % solution guess
-arg.lbx = -0.5;    % lower bound on x
-arg.ubx =  0.5;    % upper bound on x
-arg.lbg =  0;    % lower bound on g
-arg.ubg =  0;    % upper bound on g
-
 % Solve the problem
 % Don't keep x0=0, atan2(Vy(1),Vx(1)) will give inf 
-res = solver('x0',1,'lbx',[-0.5],'ubx',[0.5],'lbg',[-0.65*ones(N-1,1)],'ubg',[0.65*ones(N-1,1)]);
+res = solver('x0',1,'lbx',[-0.5],'ubx',[0.5],'lbg',[-0.8*ones(N-1,1)],'ubg',[0.8*ones(N-1,1)]);
 
 f_opt       = full(res.f);
 u_opt       = full(res.x);

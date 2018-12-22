@@ -1,13 +1,13 @@
-
+clc;
 addpath('/home/akash/Documents/casadi-linux-matlabR2014a-v3.4.5/')
 
 import casadi.*
 % Constants
 th = pi:pi/39:2*pi;
-N = length(th);
+N = length(th)-25;
 total_t = 40;
 T = total_t;
-del_t = total_t/(2*N);
+del_t = total_t/(2*length(th));
 h = del_t; %discretization step
 
 c_1 = [0,3.5];
@@ -70,6 +70,11 @@ for i=1:length(th)
     
 end
 
+% To implement loop optimal control
+% Xunit_2 = x_opt;
+% Yunit_2 = y_opt;
+% Hfinal_2 = atan2(u_opt(41:end),u_opt(1:40));
+
 nx  = 1;
 nu  = 1;
 
@@ -115,6 +120,7 @@ x_0 = c_2(1)-r; % -4
 PX = x_0;
 y_0 = c_2(2); % -3.5
 PY = y_0;
+arc = []
 for i = 1:N
     out_x = RK4(PX,Vx(i));
     PX = out_x;
@@ -130,8 +136,9 @@ for i = 1:N
     Poly_2 = [AG_2;BG_2;CG_2;DG_2;AG_2];
     [xa,ya] = polybool('intersection',Poly_1(:,1),Poly_1(:,2),Poly_2(:,1),Poly_2(:,2));
     ar = polyarea(xa,ya);
+    arc = [arc,ar];
     
-    wt = (PY - Yunit_2(i))/(Yunit_1(i) - Yunit_2(i));
+    wt = (PY(1) - Yunit_2(i))/(Yunit_1(i) - Yunit_2(i));
     
     %steer = atan2(Vy(i),Vx(i));
     
@@ -140,7 +147,8 @@ end
 
 % Terminal constraints: x_0(T)=x_1(T)=0
 % Here PX PY are the terminal Robot Positions 
-g = [PX;PY;atan2(Vy(2:end),Vx(2:end))-atan2(Vy(1:end-1),Vx(1:end-1))];
+%g = [PX;PY;atan2(Vy(2:end),Vx(2:end))-atan2(Vy(1:end-1),Vx(1:end-1))];
+g = [atan2(Vy(2:end),Vx(2:end))-atan2(Vy(1:end-1),Vx(1:end-1))];
 
 % Allocate an NLP solver
 nlp = struct('x', [Vx;Vy], 'f', J, 'g', g);
@@ -160,7 +168,7 @@ arg.ubg =  0;    % upper bound on g
 
 % Solve the problem
 % Don't keep x0=0, atan2(Vy(1),Vx(1)) will give inf 
-res = solver('x0',1,'lbx',[-0.5],'ubx',[0.5],'lbg',[4;-3.5;-0.7*ones(39,1)],'ubg',[4;3.5;0.7*ones(39,1)]);
+res = solver('x0',1,'lbx',[-0.5],'ubx',[0.5],'lbg',[-0.8*ones(N-1,1)],'ubg',[0.8*ones(N-1,1)]);
 
 f_opt       = full(res.f);
 u_opt       = full(res.x);
@@ -174,7 +182,7 @@ for i=2:N+1
     out_x       = RK4(x_opt(i-1),u_opt(i-1));
     x_opt(i)    = full(out_x);
     
-    out_y = RK4(y_opt(i-1),u_opt(40 + i-1));
+    out_y = RK4(y_opt(i-1),u_opt(N + i-1));
     y_opt(i) = full(out_y);
 end
 
@@ -187,7 +195,7 @@ xlabel('time - t')
 ylabel('state - x')
 grid on
 subplot(2,1,2)
-stairs((0:N-1)*T/N, u_opt(1:40),'r')
+stairs((0:N-1)*T/N, u_opt(1:N),'r')
 xlabel('time - t')
 ylabel('input - u')
 grid on
@@ -199,7 +207,7 @@ xlabel('time - t')
 ylabel('state - y')
 grid on
 subplot(2,1,2)
-stairs((0:N-1)*T/N, u_opt(41:end),'r')
+stairs((0:N-1)*T/N, u_opt(N+1:end),'r')
 xlabel('time - t')
 ylabel('input - u')
 grid on

@@ -1,4 +1,5 @@
 % Inspired by timevaryingmpc.m
+%using one shopt nmpc
 
 addpath('/home/akash/Documents/rawlings-group-octave-mpctools-22c04706f863/')
 addpath('/home/akash/Documents/casadi-linux-matlabR2014a-v3.4.5/')
