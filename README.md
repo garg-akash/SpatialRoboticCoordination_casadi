@@ -7,5 +7,5 @@ for results with 1 moving obstacle and 1 static obstacle: Run Oru_main.m, it cal
 [![3 Robots Coordination](http://img.youtube.com/vi/q4uXA4o79dI/0.jpg)](https://www.youtube.com/watch?v=q4uXA4o79dI "3 Robot Coordination")<br>
 A smarter solution is obtained when bounds on velocity are less-constrained (loosened).
 [![3 Robots Coordination_smarter](http://img.youtube.com/vi/A04rr_k4d_o/0.jpg)](https://www.youtube.com/watch?v=A04rr_k4d_o "3 Robot Coordination_smarter")<br>
-Robot coordination in Antipodal configuration.
-[![Antipodal Config](http://img.youtube.com/vi/cO1aWaIwPyU/0.jpg)](https://www.youtube.com/watch?v=cO1aWaIwPyU "Antipodal Config")<br>
+Robot coordination in Antipodal configuration.<br>
+[![Antipodal Config](http://img.youtube.com/vi/cO1aWaIwPyU/0.jpg)](https://www.youtube.com/watch?v=cO1aWaIwPyU "Antipodal Config")
