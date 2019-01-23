@@ -30,6 +30,7 @@ robo_vel = [];
 robo_dir = [];
 var_all_d1 = [];
 var_all_d2 = [];
+sl = [];
 for i = 1:Nsim
     fprintf('Sim no: %d', i);
     %dGrad tells whether robo is going away from obstacle or coming closer
@@ -72,7 +73,7 @@ for i = 1:Nsim
     robo_traj = [robo_traj, [Px(2);Py(2)]];
     robo_vel = [robo_vel, Vx(1)];
     robo_dir = [robo_dir, Vy(1)];
-
+    sl = [sl;d_values];
 end
 toc;
 figure;
