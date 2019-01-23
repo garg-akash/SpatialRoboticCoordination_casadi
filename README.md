@@ -8,4 +8,5 @@ for results with 1 moving obstacle and 1 static obstacle: Run Oru_main.m, it cal
 A smarter solution is obtained when bounds on velocity are less-constrained (loosened).
 [![3 Robots Coordination_smarter](http://img.youtube.com/vi/A04rr_k4d_o/0.jpg)](https://www.youtube.com/watch?v=A04rr_k4d_o "3 Robot Coordination_smarter")<br>
 Robot coordination in Antipodal configuration.<br>
-[![Antipodal Config](http://img.youtube.com/vi/cO1aWaIwPyU/0.jpg)](https://www.youtube.com/watch?v=cO1aWaIwPyU "Antipodal Config")
+[![Antipodal Config](http://img.youtube.com/vi/cO1aWaIwPyU/0.jpg)](https://www.youtube.com/watch?v=cO1aWaIwPyU "Antipodal Config")<br>
+[![Sense Radius in Antipodal config](http://img.youtube.com/vi/gYxwLL98XjE/0.jpg)](https://www.youtube.com/watch?v=gYxwLL98XjE "Sense Radius in Antipodal config")<br>
