@@ -7,8 +7,8 @@ h = del_t; %discretization step
 ns = 4; %number of sides in polygon
 L = 1; %rear to front distance
 d_rear = L/2;
-Q = 0.4;
-R = 0.6;
+Q = 0.3;
+R = 0.7;
 S = 0.1;
 V = SX.sym('V',nu);
 tht = SX.sym('tht',nu);
@@ -150,7 +150,7 @@ for i = 1:N/nv:N
     out_y = RK4y(PY,V(id),PT);
     PY = out_y;
     if((flag1(i) == 1) && (ind_left>0))
-        [AG_1,BG_1,CG_1,DG_1] = rectangle_plot(l_1,b_1,o1_h(ind_ob-1+i),o1_px(ind_ob-1+i),o1_py(ind_ob-1+i));
+        [AG_1,BG_1,CG_1,DG_1] = rectangle_plot(l_1,b_1,o1_h(ind_ob),o1_px(ind_ob),o1_py(ind_ob));
         rect1 = [AG_1;BG_1;CG_1;DG_1;AG_1];
         [AG_2,BG_2,CG_2,DG_2] = rectangle_plot(l_2,b_2,r_h(i),PX + d_rear*cos(r_h(i)),PY + d_rear*sin(r_h(i)));
         rect2 = [AG_2;BG_2;CG_2;DG_2;AG_2];
@@ -216,6 +216,7 @@ for i = 1:N/nv:N
             l = l + 1;
         end
         ind_left = ind_left - N/nv;
+        ind_ob = ind_ob + N/nv;
         J = J + R*olp1(1)*olp1(2)*olp1(3)*olp1(4);
     end
     J = J + Q*((PX(1) - r_px(i))^2  + (PY(1) - r_py(i))^2);
