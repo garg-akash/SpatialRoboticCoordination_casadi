@@ -64,7 +64,7 @@ for i = 1:N/nv:N
     if((flag1(i) == 1) && (ind_left>0))
         [AG_1,BG_1,CG_1,DG_1] = rectangle_plot(l_1,b_1,o1_h(ind_ob),o1_px(ind_ob),o1_py(ind_ob));
         rect1 = [AG_1;BG_1;CG_1;DG_1;AG_1];
-        [AG_2,BG_2,CG_2,DG_2] = rectangle_plot(l_2,b_2,r_h(i),PX + d_rear*cos(r_h(i)),PY + d_rear*sin(r_h(i)));
+        [AG_2,BG_2,CG_2,DG_2] = rectangle_plot(l_2,b_2,r_h(i),res(1) + d_rear*cos(r_h(i)),res(2) + d_rear*sin(r_h(i)));
         rect2 = [AG_2;BG_2;CG_2;DG_2;AG_2];
         
         olp1 = SX.zeros(ns,1);
