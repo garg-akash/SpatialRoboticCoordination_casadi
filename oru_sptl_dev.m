@@ -1,103 +1,39 @@
 function [v_out, omg_out, p_out, t_out, x_out, y_out] = oru_sptl_dev(N, del_t, r_st, o1_px, o1_py, o1_h, r_px, r_py, r_h ...
-                                , l_1, b_1, l_2, b_2, nv, flag1, ind_ob, ind_left, sim_no, v_prev, omg_prev)
+                                , l_1, b_1, l_2, b_2, nv, flag1, ind_ob, ind_left, sim_no, vel_0, omg_0)
+
 import casadi.*
-nx  = 1;
-nu  = 1;
+nx  = 4;
+nu  = 2;
 h = del_t; %discretization step
 ns = 4; %number of sides in polygon
-L = 1; %rear to front distance
-d_rear = L/2;
-Q = 0.3;
-R = 0.7;
-S = 0.1;
-V = SX.sym('V',nu);
-tht = SX.sym('tht',nu);
-phi = SX.sym('phi',nu);
-omg = SX.sym('omg',nu);
-Px = SX.sym('Px',nx);
-Py = SX.sym('Py',nx);
+L = 1.19; %rear to front distance
+d_rear = L/2; %rear center to body center distance
+Q = 1;
+R = 0.5;
+% S = 1;
 
-xdot = V(1)*cos(tht(1));
-ydot = V(1)*sin(tht(1));
-tdot = (V(1)/L)*tan(phi(1));
-pdot = omg(1);
-% Intergrator for x and y
-fy = Function('fy', {Py,V,tht},{ydot});
-fx = Function('fx', {Px,V,tht},{xdot});
-% Integrator for phi
-fp = Function('fp', {phi,omg},{pdot});
-% Integrator for tht
-ft = Function('ft', {tht,V,phi},{tdot});
+obj.states = MX.sym('Sxy',ns,1);             %[x,y,theta,phi]
+obj.controls = MX.sym('Uxy',nu,1);          %[v, omega ]
+S = obj.states;
+U = obj.controls;
+f_expr = [U(1)*cos(S(3))       ;...       %x_dot = V cos(theta)
+         U(1)*sin(S(3))        ;...       %y_dot = V sin(theta)
+         U(1)*tan(S(4))/L      ;...       %theta_dot = V*tan(phi)/L
+         U(2)                 ];     %phi_dot = omega (angular_velocity) 
 
-V      = MX.sym('V');
-tht    = MX.sym('tht');
-phi    = MX.sym('phi');
-omg    = MX.sym('omg');
-% RK4
-PX0  = MX.sym('PX0',nx);
-PX   = PX0;
+f = Function('f',{S,U}, {f_expr});
 
-k = fx(PX,V,tht);
-k1 = k;
-k = fx(PX + h/2 * k1, V, tht);
-k2 = k;
-k = fx(PX + h/2 * k2, V, tht);
-k3 = k;
-k = fx(PX + h   * k3, V, tht);
-k4 = k;
-PX = PX + h/6*(k1   + 2*k2   + 2*k3   + k4);
-RK4x = Function('RK4x',{PX0,V,tht},{PX});
+x0 = MX.sym('x0',ns);
+x = x0;
+u = MX.sym('u',nu);
 
-% RK4
-PY0  = MX.sym('PY0',nx);
-PY   = PY0;
+k1 = f(x,u);
+k2 = f(x+0.5*h*k1,u);
+k3 = f(x+0.5*h*k2,u);
+k4 = f(x+h*k3,u);
+x = x + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
 
-k = fy(PY,V,tht);
-k1 = k;
-k = fy(PY + h/2 * k1, V, tht);
-k2 = k;
-k = fy(PY + h/2 * k2, V, tht);
-k3 = k;
-k = fy(PY + h   * k3, V, tht);
-k4 = k;
-PY = PY + h/6*(k1   + 2*k2   + 2*k3   + k4);
-RK4y = Function('RK4y',{PY0,V,tht},{PY});
-
-% RK4
-PT0  = MX.sym('PT0',nx);
-PT   = PT0;
-
-k = ft(PT,V,phi);
-k1 = k;
-k = ft(PT + h/2 * k1, V, phi);
-k2 = k;
-k = ft(PT + h/2 * k2, V, phi);
-k3 = k;
-k = ft(PT + h   * k3, V, phi);
-k4 = k;
-PT = PT + h/6*(k1   + 2*k2   + 2*k3   + k4);
-RK4t = Function('RK4t',{PT0,V,phi},{PT});
-
-% RK4
-PP0  = MX.sym('PP0',nx);
-PP   = PP0;
-
-k = fp(PP,omg);
-k1 = k;
-k = fp(PP + h/2 * k1, omg);
-k2 = k;
-k = fp(PP + h/2 * k2, omg);
-k3 = k;
-k = fp(PP + h   * k3, omg);
-k4 = k;
-PP = PP + h/6*(k1   + 2*k2   + 2*k3   + k4);
-RK4p = Function('RK4p',{PP0,omg},{PP});
-
-
-V = SX.sym('V',nv);
-%tht = SX.sym('tht',nv);
-%phi = SX.sym('phi',nv);
-omg = SX.sym('omg',nv);
+F = Function('F',{x0,u},{x});
 
 % Objective function
 w={};
@@ -110,45 +46,21 @@ g={};
 lbg = [];
 ubg = [];
 
-% Get an expression for the cost and state at end
-x_0 = r_st(1);
-PX = x_0;
-y_0 = r_st(2); 
-PY = y_0;
-t_0 = r_st(3);
-PT = t_0;
-p_0 = r_st(4);
-PP = p_0;
-
-w = {V omg};
-% if(sim_no == 1)
-    lbw = [lbw; 0*ones(nv,1); -0.5*ones(nv,1)];
-    ubw = [ubw; 0.7*ones(nv,1); 0.5*ones(nv,1)];
-    w0 = [w0; 0.6*ones(nv,1); 0.2*ones(nv,1)];
-% else
-%     %     lbw = [lbw; min(v_prev-0.2*ones(nv-1,1),0*ones(nv-1,1)); min(v_prev(end)-0.2,0.7); omg_prev-0.2*ones(nv-1,1); omg_prev(end)-0.2];
-%     %     ubw = [ubw; min(v_prev+0.2*ones(nv-1,1),0.7*ones(nv-1,1)); min(v_prev(end)+0.2,0.7); omg_prev+0.2*ones(nv-1,1); omg_prev(end)+0.2];
-%     lbw = [lbw; v_prev-0.2*ones(nv-1,1); v_prev(end)-0.2; omg_prev-0.2*ones(nv-1,1); omg_prev(end)-0.2];
-%     ubw = [ubw; v_prev+0.2*ones(nv-1,1); v_prev(end)+0.2; omg_prev+0.2*ones(nv-1,1); omg_prev(end)+0.2];
-%     w0 = [w0; v_prev; v_prev(end); omg_prev; omg_prev(end)];
-% end
-discrete = [discrete; zeros(nv,1); zeros(nv,1)];
+x = SX.sym('x', ns, nv+1);
+x(:,1) = r_st;
 
 l = 1; %It's a global variable to number the decision variables
-id = 1;
 for i = 1:N/nv:N
     
-    out_phi = RK4p(PP,omg(id));
-    PP = out_phi;
-    
-    out_t = RK4t(PT,V(id),PP);
-    PT = out_t;
-    
-    out_x = RK4x(PX,V(id),PT);
-    PX = out_x;
-    
-    out_y = RK4y(PY,V(id),PT);
-    PY = out_y;
+    u = SX.sym(['u_' num2str(i)],nu); 
+    w = {w{:} u};
+    lbw = [lbw; -1; -1];
+    ubw = [ubw; 1; 1];
+    w0 = [w0; vel_0(i); omg_0(i)];
+    discrete = [discrete; 0; 0];
+    res = F(x(:,i),u); %integrator
+    x(:,i+1) = res(1:nx);
+    J = J + Q*((res(1) - r_px(i))^2  + (res(2) - r_py(i))^2);
     if((flag1(i) == 1) && (ind_left>0))
         [AG_1,BG_1,CG_1,DG_1] = rectangle_plot(l_1,b_1,o1_h(ind_ob),o1_px(ind_ob),o1_py(ind_ob));
         rect1 = [AG_1;BG_1;CG_1;DG_1;AG_1];
@@ -219,13 +131,6 @@ for i = 1:N/nv:N
         ind_ob = ind_ob + N/nv;
         J = J + R*olp1(1)*olp1(2)*olp1(3)*olp1(4);
     end
-    J = J + Q*((PX(1) - r_px(i))^2  + (PY(1) - r_py(i))^2);
-    
-    J = J + S*(omg(id)^2);
-%     if(i>1)
-%         J = J + 0.1*(tht(id)-tht(id-1));
-%     end
-    id = id + 1;
 end
 w = vertcat(w{:});
 g = vertcat(g{:});
@@ -242,36 +147,24 @@ length(discrete)
 % Create an NLP solver
 nlp_prob = struct('f', J, 'x', w, 'g', g);
 nlp_solver = nlpsol('nlp_solver', 'bonmin', nlp_prob, struct('discrete', discrete));
-% nlp_solver = nlpsol('nlp_solver', 'ipopt', nlp_prob);
+%  nlp_solver = nlpsol('nlp_solver', 'ipopt', nlp_prob);
 % Solve the NLP
 sol = nlp_solver('x0',w0, 'lbx',lbw, 'ubx',ubw, 'lbg',lbg, 'ubg',ubg);
 w_opt = full(sol.x);
 
 % Compute state trajectory integrating the dynamics
 x_opt       = zeros(nx,nv+1);
-x_opt(1)    = x_0;
-y_opt       = zeros(nx,nv+1);
-y_opt(1)    = y_0;
-t_opt       = zeros(nx,nv+1);
-t_opt(1)    = t_0;
-p_opt       = zeros(nx,nv+1);
-p_opt(1)    = p_0;
-for i=2:nv+1  
-    out_p       = RK4p(p_opt(i-1),w_opt(nv+i-1));
-    p_opt(i)    = full(out_p);
-        
-    out_t       = RK4t(t_opt(i-1),w_opt(i-1),w_opt(nv+i-1));
-    t_opt(i)    = full(out_t);
-    
-    out_x       = RK4x(x_opt(i-1),w_opt(i-1),t_opt(i));
-    x_opt(i)    = full(out_x);
-    
-    out_y       = RK4y(y_opt(i-1),w_opt(i-1),t_opt(i));
-    y_opt(i)    = full(out_y);
+x_opt(:,1)    = r_st;
+
+v_opt = w_opt(1:nu:end);
+omg_opt = w_opt(2:nu:end);
+
+for i=2:nv+1
+    x_opt(:,i) = full(F(x_opt(:,i-1),[v_opt(i-1);omg_opt(i-1)]));
 end
-p_out = p_opt;
-t_out = t_opt;
-x_out = x_opt;
-y_out = y_opt;
-v_out = w_opt(1:nv);
-omg_out = w_opt(nv+1:2*nv);
+p_out = x_opt(4:nx:end,1:nv+1);
+t_out = x_opt(3:nx:end,1:nv+1);
+x_out = x_opt(1:nx:end,1:nv+1);
+y_out = x_opt(2:nx:end,1:nv+1);
+v_out = v_opt;
+omg_out = omg_opt;
