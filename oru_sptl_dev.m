@@ -23,17 +23,17 @@ f_expr = [U(1)*cos(S(3))       ;...       %x_dot = V cos(theta)
 
 f = Function('f',{S,U}, {f_expr});
 
-x0 = MX.sym('x0',ns);
-x = x0;
+s0 = MX.sym('s0',ns);
+s = s0;
 u = MX.sym('u',nu);
 
-k1 = f(x,u);
-k2 = f(x+0.5*h*k1,u);
-k3 = f(x+0.5*h*k2,u);
-k4 = f(x+h*k3,u);
-x = x + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
+k1 = f(s,u);
+k2 = f(s+0.5*h*k1,u);
+k3 = f(s+0.5*h*k2,u);
+k4 = f(s+h*k3,u);
+s = s + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
 
-F = Function('F',{x0,u},{x});
+F = Function('F',{s0,u},{s});
 
 % Objective function
 w={};
@@ -46,8 +46,8 @@ g={};
 lbg = [];
 ubg = [];
 
-x = SX.sym('x', ns, nv+1);
-x(:,1) = r_st;
+s = SX.sym('x', ns, nv+1);
+s(:,1) = r_st;
 
 l = 1; %It's a global variable to number the decision variables
 for i = 1:N/nv:N
@@ -58,8 +58,8 @@ for i = 1:N/nv:N
     ubw = [ubw; 1; 1];
     w0 = [w0; vel_0(i); omg_0(i)];
     discrete = [discrete; 0; 0];
-    res = F(x(:,i),u); %integrator
-    x(:,i+1) = res(1:nx);
+    res = F(s(:,i),u); %integrator
+    s(:,i+1) = res(1:nx);
     J = J + Q*((res(1) - r_px(i))^2  + (res(2) - r_py(i))^2);
     if((flag1(i) == 1) && (ind_left>0))
         [AG_1,BG_1,CG_1,DG_1] = rectangle_plot(l_1,b_1,o1_h(ind_ob),o1_px(ind_ob),o1_py(ind_ob));
