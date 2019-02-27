@@ -46,10 +46,11 @@ g={};
 lbg = [];
 ubg = [];
 
-s = SX.sym('x', ns, nv+1);
+s = SX.sym('x', nx, nv+1);
 s(:,1) = r_st;
 
 l = 1; %It's a global variable to number the decision variables
+id = 1;
 for i = 1:N/nv:N
     
     u = SX.sym(['u_' num2str(i)],nu); 
@@ -58,8 +59,8 @@ for i = 1:N/nv:N
     ubw = [ubw; 1; 1];
     w0 = [w0; vel_0(i); omg_0(i)];
     discrete = [discrete; 0; 0];
-    res = F(s(:,i),u); %integrator
-    s(:,i+1) = res(1:nx);
+    res = F(s(:,id),u); %integrator
+    s(:,id+1) = res(1:nx);
     J = J + Q*((res(1) - r_px(i))^2  + (res(2) - r_py(i))^2);
     if((flag1(i) == 1) && (ind_left>0))
         [AG_1,BG_1,CG_1,DG_1] = rectangle_plot(l_1,b_1,o1_h(ind_ob),o1_px(ind_ob),o1_py(ind_ob));
@@ -131,6 +132,7 @@ for i = 1:N/nv:N
         ind_ob = ind_ob + N/nv;
         J = J + R*olp1(1)*olp1(2)*olp1(3)*olp1(4);
     end
+    id = id + 1;
 end
 w = vertcat(w{:});
 g = vertcat(g{:});
